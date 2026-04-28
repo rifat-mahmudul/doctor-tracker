@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useRouter } from "next/navigation";
-import { Plus, Eye, Trash2, Loader2, UserRoundX } from "lucide-react";
+import { Plus, Eye, Trash2, Loader2, UserRoundX, Edit } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -59,7 +58,6 @@ interface ApiResponse {
 }
 
 const PatientList = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -91,7 +89,7 @@ const PatientList = () => {
       <div className="flex items-center justify-between bg-white p-6 rounded-xl border shadow-sm">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Patients Directory
+            Patients Information
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage and monitor patient admissions and conditions.
@@ -166,16 +164,26 @@ const PatientList = () => {
                   </TableCell>
                   <TableCell className="py-3 text-center">
                     <div className="flex justify-center items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
-                        onClick={() =>
-                          router.push(`/patient-management/${patient._id}`)
-                        }
+                      <Link href={`/patient-management/${patient._id}`}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link
+                        href={`/patient-management/edit-patient/${patient?._id}`}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         size="icon"
