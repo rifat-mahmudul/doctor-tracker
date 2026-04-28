@@ -10,9 +10,16 @@ export async function GET(
   try {
     await connectDB();
 
-    const doctorId = params.id;
+    const { id } = await params;
 
-    const doctor = await Doctor.findById(doctorId);
+    if (!id) {
+      return NextResponse.json(
+        { message: "Doctor ID is missing in request" },
+        { status: 400 },
+      );
+    }
+
+    const doctor = await Doctor.findById(id);
 
     if (!doctor) {
       return NextResponse.json(
@@ -21,7 +28,7 @@ export async function GET(
       );
     }
 
-    const patients = await Patient.find({ doctorId }).sort({ createdAt: -1 });
+    const patients = await Patient.find({ id }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
@@ -34,6 +41,91 @@ export async function GET(
     console.log("error from doctor details: ", error);
     return NextResponse.json(
       { message: "Failed to fetch doctor details" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Doctor ID is missing in request" },
+        { status: 400 },
+      );
+    }
+
+    const body = await req.json();
+
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedDoctor) {
+      return NextResponse.json(
+        { message: "Doctor not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Doctor updated successfully",
+      data: updatedDoctor,
+    });
+  } catch (error) {
+    console.error("Error updating doctor:", error);
+    return NextResponse.json(
+      { message: "Failed to update doctor" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Doctor ID is missing in request" },
+        { status: 400 },
+      );
+    }
+
+    const doctor = await Doctor.findById(id);
+
+    if (!doctor) {
+      return NextResponse.json(
+        { message: "Doctor not found" },
+        { status: 404 },
+      );
+    }
+
+    await Doctor.findByIdAndDelete(id);
+
+    await Patient.updateMany({ doctorId: id }, { $unset: { doctorId: "" } });
+
+    return NextResponse.json({
+      success: true,
+      message: "Doctor deleted and patient assignments cleared",
+    });
+  } catch (error) {
+    console.error("Error deleting doctor:", error);
+    return NextResponse.json(
+      { message: "Failed to delete doctor" },
       { status: 500 },
     );
   }

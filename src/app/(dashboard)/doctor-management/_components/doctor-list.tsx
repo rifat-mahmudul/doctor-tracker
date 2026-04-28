@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Trash2, Loader2, UserRoundX } from "lucide-react";
+import { Plus, Eye, Trash2, Loader2, UserRoundX, Edit } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import Link from "next/link";
 
 interface IDoctor {
   _id: string;
@@ -154,16 +155,24 @@ const DoctorList = () => {
                   </TableCell>
                   <TableCell className="py-3 text-center">
                     <div className="flex justify-center items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
-                        onClick={() =>
-                          router.push(`/doctor-management/${doctor._id}`)
-                        }
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <Link href={`/doctor-management/${doctor._id}`}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/doctor-management/create/edit/${doctor._id}`}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         size="icon"
