@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,7 @@ export function AppSidebar() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <SidebarMenuButton
-              className="h-[45px] gap-3 px-3 text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 rounded-lg group/logout"
+              className="h-[45px] gap-3 px-3 text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 rounded-lg group/logout cursor-pointer"
               tooltip="Log Out"
             >
               <LogOut className="size-5 transition-transform group-hover/logout:-translate-x-1" />

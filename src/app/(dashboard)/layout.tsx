@@ -6,13 +6,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen w-full">
           <AppSidebar />
+
           <main className="flex-1 overflow-x-hidden">
-            <div className="p-5">
+            <header className="flex h-15 items-center border-b px-4">
               <SidebarTrigger />
-              {children}
-            </div>
+            </header>
+
+            <div className="p-5">{children}</div>
           </main>
         </div>
       </SidebarProvider>
