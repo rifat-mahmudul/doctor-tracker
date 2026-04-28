@@ -1,6 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/db";
+import { User } from "@/models/User";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,20 +13,28 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await connectDB();
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { email, password } = credentials as any;
-
-        if (email === "admin@test.com" && password === "123456") {
-          return {
-            id: "1",
-            name: "Admin",
-            email: "admin@test.com",
-          };
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
 
-        return null;
+        await connectDB();
+
+        const user = await User.findOne({ email: credentials.email });
+
+        if (!user) return null;
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password,
+        );
+
+        if (!isPasswordValid) return null;
+
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+        };
       },
     }),
   ],
