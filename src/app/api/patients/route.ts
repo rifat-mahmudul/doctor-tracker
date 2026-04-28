@@ -38,3 +38,54 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(req.url);
+
+    const search = searchParams.get("search") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const condition = searchParams.get("condition") || "";
+
+    const skip = (page - 1) * limit;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = {};
+
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    if (condition) {
+      query.condition = condition;
+    }
+
+    const patients = await Patient.find(query)
+      .populate("doctorId", "name specialization")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Patient.countDocuments(query);
+
+    return NextResponse.json({
+      success: true,
+      data: patients,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.log("error from get all patient: ", error);
+    return NextResponse.json(
+      { message: "Failed to fetch patients" },
+      { status: 500 },
+    );
+  }
+}
