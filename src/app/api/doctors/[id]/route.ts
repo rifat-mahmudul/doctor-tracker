@@ -5,7 +5,7 @@ import { Patient } from "@/models/Patient";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
@@ -28,7 +28,9 @@ export async function GET(
       );
     }
 
-    const patients = await Patient.find({ doctorId: id }).sort({ createdAt: -1 });
+    const patients = await Patient.find({ doctorId: id }).sort({
+      createdAt: -1,
+    });
 
     return NextResponse.json({
       success: true,
@@ -48,7 +50,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
@@ -92,7 +94,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
