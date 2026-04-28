@@ -1,36 +1,240 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🩺 Doctor Tracker
 
-## Getting Started
+## 🚀 Overview
 
-First, run the development server:
+Doctor Tracker is a secure, full-stack administrative web application built with Next.js that allows authenticated users to manage doctors and their corresponding patients. The system focuses on performance optimization, clean user experience, and meaningful data visualization.
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication
+
+* Secure login system using NextAuth (JWT-based)
+* Protected routes using middleware
+* Role-ready architecture (admin/staff scalable)
+
+---
+
+### 🧑‍⚕️ Doctor Management
+
+* Create doctor
+* View doctor list
+* Search & filter doctors
+* Pagination support
+* View patients under each doctor
+* Add/Delete patients per doctor
+
+---
+
+### 🧑 Patient Management
+
+* List all patients
+* Edit patient information
+* Delete patients
+* Search & filter
+* Pagination support
+
+---
+
+### 📊 Dashboard & Analytics
+
+* Total doctors
+* Total patients
+* Patients per doctor
+* Date-based statistics
+* Charts (data visualization)
+
+---
+
+### 🎨 UI/UX
+
+* Modern UI with clean layout
+* Responsive design (mobile + desktop)
+* Smooth navigation
+* Loading, empty & error states handled
+* Toast notifications
+
+---
+
+## 🛠 Tech Stack
+
+* **Frontend & Backend:** Next.js (App Router, Full-stack)
+* **Database:** MongoDB (Mongoose)
+* **Authentication:** NextAuth (JWT strategy)
+* **State Management:** React Query
+* **UI:** Tailwind CSS + shadcn/ui
+* **Validation:** Zod + React Hook Form
+
+---
+
+## ⚙️ Setup Guide
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/rifat-mahmudul/doctor-tracker.git
+cd doctor-tracker
+```
+
+---
+
+### 2️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ Create Environment File
+
+Create a `.env.local` file in the root directory and add:
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_URL=http://localhost:3000/
+NEXTAUTH_SECRET=your_nex_auth_secret
+ADMIN_EMAIL=_admin_email
+ADMIN_PASS=admin_password
+```
+
+---
+
+### 4️⃣ Run Seed Script (Create Admin User)
+
+This script will create the first admin user in the database.
+
+```bash
+npx tsx src/scripts/seedAdmin.ts
+```
+
+Expected output:
+
+```bash
+Admin created successfully
+```
+
+or
+
+```bash
+Admin already exists
+```
+
+---
+
+### 5️⃣ Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App will be available at:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```txt
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🔐 Demo Credentials
 
-To learn more about Next.js, take a look at the following resources:
+```txt
+Email: rifatmahmudul.dev@gmail.com
+Password: admin@!123
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏗 System Architecture
 
-## Deploy on Vercel
+```txt
+Frontend (Next.js UI)
+        ↓
+API Routes (Next.js backend)
+        ↓
+MongoDB (Mongoose Models)
+        ↓
+NextAuth (Authentication Layer)
+        ↓
+Middleware (Route Protection)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🤔 Technical Decisions
+
+### 1. Why JWT-based Authentication (NextAuth)?
+
+JWT allows stateless authentication, reducing database load and improving performance. It also integrates seamlessly with middleware for route protection.
+
+---
+
+### 2. Why React Query instead of Context API?
+
+React Query provides:
+
+* Server state caching
+* Background refetching
+* Better performance
+* Cleaner data fetching patterns
+
+This results in a more scalable and maintainable frontend architecture.
+
+---
+
+## ⚡ Performance Optimizations
+
+* MongoDB indexing for faster queries
+* Pagination using `.limit()` and `.skip()`
+* Regex-based search optimization
+* Cached DB connection
+* Avoided unnecessary React re-renders
+
+---
+
+## 📁 Folder Structure (Simplified)
+
+```txt
+src/
+ ├── app/
+ │    ├── api/
+ │    ├── dashboard/
+ │    ├── doctors/
+ │    ├── patients/
+ │
+ ├── models/
+ ├── lib/
+ ├── scripts/
+ ├── components/
+```
+
+---
+
+## 📸 Screenshots
+
+### 🖥 Desktop View
+![Dashboard](./screenshots/dashboard.png)
+
+### 📱 Mobile View
+![Mobile](./screenshots/mobile.png)
+
+### 🧑‍⚕️ Doctor Management
+![Doctors](./screenshots/doctors.png)
+
+### 🧑 Patient Page
+![Patients](./screenshots/patients.png)
+
+---
+
+## 🚀 Deployment
+
+You can deploy easily using:
+
+* Vercel (recommended)
+
+---
+
+## 📄 License
+
+This project is for assessment and learning purposes.

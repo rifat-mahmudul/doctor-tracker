@@ -38,7 +38,7 @@ export const EmptyPatientState = ({
         </Button>
       ) : (
         <Link href="/patient-management/create">
-          <Button variant="outline" className="mt-2 rounded-sm h-[40px] px-6">
+          <Button className="mt-2 rounded-sm h-[40px] px-6">
             <Plus className="w-4 h-4 mr-2" />
             Register Patient
           </Button>

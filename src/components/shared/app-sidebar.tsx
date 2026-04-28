@@ -52,10 +52,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="h-[60px] flex items-center justify-center border-b bg-card/50 backdrop-blur-md">
         <h1 className="font-bold text-xl group-data-[collapsible=icon]:hidden tracking-tight">
-          HMS <span className="text-primary">Admin</span>
+          Doctor <span className="text-primary">Tracker</span>
         </h1>
         <div className="hidden group-data-[collapsible=icon]:block font-bold text-primary text-xl">
-          H
+          D
         </div>
       </SidebarHeader>
 
