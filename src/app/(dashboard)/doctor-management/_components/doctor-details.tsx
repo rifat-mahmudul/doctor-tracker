@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -14,6 +14,8 @@ import {
   Users,
   Loader2,
   User,
+  Trash2,
+  Eye,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface IPatient {
   _id: string;
@@ -53,7 +64,14 @@ interface IDoctorDetails {
 const DoctorDetails = () => {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const doctorId = params.id as string;
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const { data, isLoading } = useQuery<IDoctorDetails>({
     queryKey: ["doctor", doctorId],
@@ -63,6 +81,34 @@ const DoctorDetails = () => {
     },
     enabled: !!doctorId,
   });
+
+  const { mutate: deletePatient, isPending: isDeleting } = useMutation({
+    mutationFn: async (patientId: string) => {
+      return await axios.delete(`/api/patients/${patientId}`);
+    },
+    onSuccess: () => {
+      toast.success("Patient record removed successfully");
+      queryClient.invalidateQueries({ queryKey: ["doctor", doctorId] });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+      setDeleteDialogOpen(false);
+      setSelectedPatient(null);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete patient");
+    },
+  });
+
+  const handleDeleteClick = (patientId: string, name: string) => {
+    setSelectedPatient({ id: patientId, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedPatient) {
+      deletePatient(selectedPatient.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -98,6 +144,7 @@ const DoctorDetails = () => {
           <Button
             variant="outline"
             size="icon"
+            type="button"
             onClick={() => router.back()}
             className="h-9 w-9 rounded-sm border-slate-200"
           >
@@ -129,7 +176,7 @@ const DoctorDetails = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Contact & Stats */}
+        {/* Left Column */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="rounded-xl border shadow-sm overflow-hidden pt-0">
             <div className="h-32 bg-gradient-to-r from-slate-500 to-slate-900" />
@@ -137,7 +184,7 @@ const DoctorDetails = () => {
               <div className="h-24 w-24 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <User className="h-12 w-12 text-slate-400" />
               </div>
-
+              {/* Profile Details (Hospital, Email, Phone) */}
               <div className="space-y-4 pt-4 border-t border-slate-100 mt-2">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-sm bg-slate-50 flex items-center justify-center border border-slate-100">
@@ -152,7 +199,6 @@ const DoctorDetails = () => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-sm bg-slate-50 flex items-center justify-center border border-slate-100">
                     <Mail className="h-4 w-4 text-slate-500" />
@@ -162,11 +208,10 @@ const DoctorDetails = () => {
                       Email
                     </p>
                     <p className="text-sm text-slate-700 font-medium leading-none">
-                      {doctor.email || "No email added"}
+                      {doctor.email || "N/A"}
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-sm bg-slate-50 flex items-center justify-center border border-slate-100">
                     <Phone className="h-4 w-4 text-slate-500" />
@@ -176,7 +221,7 @@ const DoctorDetails = () => {
                       Contact
                     </p>
                     <p className="text-sm text-slate-700 font-medium leading-none">
-                      {doctor.phone || "No phone added"}
+                      {doctor.phone || "N/A"}
                     </p>
                   </div>
                 </div>
@@ -184,7 +229,7 @@ const DoctorDetails = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Stats Card */}
+          {/* Stats Card */}
           <Card className="rounded-xl border shadow-sm p-6 bg-white">
             <div className="flex items-center justify-between">
               <div>
@@ -199,9 +244,6 @@ const DoctorDetails = () => {
                 <Users className="h-7 w-7 text-blue-600" />
               </div>
             </div>
-            <p className="text-xs text-slate-400 mt-4 italic">
-              * Total records assigned in system
-            </p>
           </Card>
         </div>
 
@@ -212,7 +254,7 @@ const DoctorDetails = () => {
               <div className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5 text-blue-600" />
                 <CardTitle className="text-lg font-bold text-slate-800">
-                  Recent Assignments
+                  Recent Patients
                 </CardTitle>
               </div>
             </CardHeader>
@@ -221,15 +263,21 @@ const DoctorDetails = () => {
                 <Table>
                   <TableHeader className="bg-slate-50/50">
                     <TableRow>
-                      <TableHead className="font-bold py-4">Name</TableHead>
-                      <TableHead className="font-bold">Condition</TableHead>
-                      <TableHead className="font-bold">Admitted On</TableHead>
-                      <TableHead className="text-right font-bold px-6">
-                        Action
+                      <TableHead className="font-bold py-4 text-center">
+                        Name
+                      </TableHead>
+                      <TableHead className="font-bold text-center">
+                        Condition
+                      </TableHead>
+                      <TableHead className="font-bold text-center">
+                        Admitted On
+                      </TableHead>
+                      <TableHead className="text-right font-bold px-6 text-center">
+                        Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className=" text-center">
                     {patients.map((p: IPatient) => (
                       <TableRow
                         key={p._id}
@@ -253,16 +301,24 @@ const DoctorDetails = () => {
                             year: "numeric",
                           })}
                         </TableCell>
-                        <TableCell className="text-right px-6">
+                        <TableCell className="text-center px-6 space-x-3">
+                          <Link href={`/patient-management/${p._id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="outline"
-                            size="sm"
-                            className="h-8 text-xs rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() =>
-                              router.push(`/patient-management/${p._id}`)
-                            }
+                            size="icon"
+                            disabled={isDeleting}
+                            className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-slate-200"
+                            onClick={() => handleDeleteClick(p._id, p.name)}
                           >
-                            View Record
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -274,21 +330,53 @@ const DoctorDetails = () => {
                   <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto border border-dashed border-slate-200">
                     <Users className="h-8 w-8 text-slate-300" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-slate-800 font-bold">
-                      No active patients
-                    </p>
-                    <p className="text-slate-500 text-sm max-w-[250px] mx-auto">
-                      This doctor currently doesn&apos;t have any patients
-                      assigned in the database.
-                    </p>
-                  </div>
+                  <p className="text-slate-800 font-bold">No active patients</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Simple Dialog for Delete Confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="rounded-xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Patient Record?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                {selectedPatient?.name}
+              </span>
+              &apos;s record? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-3 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="rounded-sm h-[45px] border-slate-200 flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="rounded-sm h-[45px] flex-1 sm:flex-none"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Patient"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

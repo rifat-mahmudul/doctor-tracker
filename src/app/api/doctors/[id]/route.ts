@@ -28,7 +28,7 @@ export async function GET(
       );
     }
 
-    const patients = await Patient.find({ id }).sort({ createdAt: -1 });
+    const patients = await Patient.find({ doctorId: id }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
