@@ -214,21 +214,21 @@ src/
 ## 📸 Screenshots
 
 ### Authentication
-![Login](/screenshots/login.png)
+![Login](./public/screenshots/login.png)
 
 ### 🖥 Desktop View
-![Dashboard](/screenshots/dashboard.png)
+![Dashboard](./public/screenshots/dashboard.png)
 
 ### 📱 Mobile View
-![Mobile](/screenshots/mobile.png)
+![Mobile](./public/screenshots/mobile.png)
 
 ### 🧑‍⚕️ Doctor Management
-![Doctors](/screenshots/doctor-list.png)
-![Doctors](/screenshots/doctor-details.png)
+![Doctors](./public/screenshots/doctor-list.png)
+![Doctors](./public/screenshots/doctor-details.png)
 
 ### 🧑 Patient Page
-![Patients](/screenshots/patient-list.png)
-![Patients](/screenshots/patient-details.png)
+![Patients](./public/screenshots/patient-list.png)
+![Patients](./public/screenshots/patient-details.png)
 
 ---
 
