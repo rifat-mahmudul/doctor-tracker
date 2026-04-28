@@ -60,7 +60,7 @@ export const DoctorTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Array.from({ length: 5 }).map((_, index) => (
+          {Array.from({ length: 15 }).map((_, index) => (
             <TableRow key={index}>
               {columns.map((_, i) => (
                 <TableCell key={i}>
