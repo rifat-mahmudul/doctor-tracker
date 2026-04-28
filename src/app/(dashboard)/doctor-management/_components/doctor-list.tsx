@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Trash2, Loader2, UserRoundX, Edit } from "lucide-react";
+import { Plus, Eye, Trash2, Loader2, UserRoundX, Edit, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 interface IDoctor {
@@ -42,6 +43,7 @@ interface IDoctor {
   hospital: string;
   phone?: string;
   email?: string;
+  patientCount?: number;
 }
 
 interface ApiResponse {
@@ -111,6 +113,7 @@ const DoctorList = () => {
                 "Specialization",
                 "Hospital",
                 "Contact",
+                "Patients",
                 "Actions",
               ].map((head) => (
                 <TableHead
@@ -126,7 +129,7 @@ const DoctorList = () => {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={index}>
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {Array.from({ length: 6 }).map((_, i) => (
                     <TableCell key={i}>
                       <Skeleton className="h-5 w-32 mx-auto" />
                     </TableCell>
@@ -153,6 +156,23 @@ const DoctorList = () => {
                   <TableCell className="text-slate-600 text-center">
                     {doctor.phone || "N/A"}
                   </TableCell>
+                  <TableCell className="text-center">
+                    <Link href={`/doctor-management/${doctor._id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 h-8 rounded-sm hover:bg-blue-50 hover:text-blue-600"
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        <span className="font-semibold">
+                          {doctor.patientCount || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          patients
+                        </span>
+                      </Button>
+                    </Link>
+                  </TableCell>
                   <TableCell className="py-3 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <Link href={`/doctor-management/${doctor._id}`}>
@@ -164,7 +184,7 @@ const DoctorList = () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Link href={`/doctor-management/create/edit/${doctor._id}`}>
+                      <Link href={`/doctor-management/edit/${doctor._id}`}>
                         <Button
                           variant="outline"
                           size="icon"
@@ -188,7 +208,7 @@ const DoctorList = () => {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="h-[400px] text-center bg-slate-50/30"
                 >
                   <div className="flex flex-col items-center justify-center space-y-4">

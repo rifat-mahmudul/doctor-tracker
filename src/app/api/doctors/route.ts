@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Doctor } from "@/models/Doctor";
+import { Patient } from "@/models/Patient";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -65,11 +66,27 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit);
 
+    const doctorIds = doctors.map((doctor) => doctor._id);
+    const patientCounts = await Patient.aggregate([
+      { $match: { doctorId: { $in: doctorIds } } },
+      { $group: { _id: "$doctorId", count: { $sum: 1 } } },
+    ]);
+
+    const countMap = new Map();
+    patientCounts.forEach((item) => {
+      countMap.set(item._id.toString(), item.count);
+    });
+
+    const doctorsWithCounts = doctors.map((doctor) => ({
+      ...doctor.toObject(),
+      patientCount: countMap.get(doctor._id.toString()) || 0,
+    }));
+
     const total = await Doctor.countDocuments(query);
 
     return NextResponse.json({
       success: true,
-      data: doctors,
+      data: doctorsWithCounts,
       pagination: {
         total,
         page,
