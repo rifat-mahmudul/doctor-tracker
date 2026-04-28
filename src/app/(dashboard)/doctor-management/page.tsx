@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
+import DoctorList from "./_components/doctor-list";
 
 const page = () => {
   return (
-    <div>doctor-management</div>
-  )
-}
+    <div>
+      <DoctorList />
+    </div>
+  );
+};
 
-export default page
+export default page;
