@@ -95,7 +95,7 @@ Create a `.env.local` file in the root directory and add:
 MONGODB_URI=your_mongodb_connection_string
 NEXTAUTH_URL=http://localhost:3000/
 NEXTAUTH_SECRET=your_nex_auth_secret
-ADMIN_EMAIL=_admin_email
+ADMIN_EMAIL=admin_email
 ADMIN_PASS=admin_password
 ```
 

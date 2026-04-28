@@ -45,7 +45,7 @@ export default function LoginPage() {
 
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Admin Portal
+              Log in
             </h1>
           </div>
         </div>
