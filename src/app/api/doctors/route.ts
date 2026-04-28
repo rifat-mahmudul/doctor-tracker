@@ -48,6 +48,10 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const specialization = searchParams.get("specialization");
+    const hospital = searchParams.get("hospital");
 
     const skip = (page - 1) * limit;
 
@@ -59,6 +63,24 @@ export async function GET(req: NextRequest) {
         { name: { $regex: search, $options: "i" } },
         { hospital: { $regex: search, $options: "i" } },
       ];
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    if (specialization && specialization !== "all") {
+      query.specialization = { $regex: new RegExp(`^${specialization}$`, "i") };
+    }
+
+    if (hospital && hospital !== "all") {
+      query.hospital = { $regex: hospital, $options: "i" };
     }
 
     const doctors = await Doctor.find(query)

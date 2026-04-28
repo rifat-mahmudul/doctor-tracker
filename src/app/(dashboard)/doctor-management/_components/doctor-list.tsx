@@ -4,37 +4,17 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Trash2, Loader2, UserRoundX, Edit, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { DoctorSearchBar } from "./doctor-searchbar";
+import { DoctorFilters } from "./doctor-filters";
+import { ActiveFilters } from "./active-filters";
+import { DoctorTable } from "./doctor-table";
+import { EmptyDoctorState } from "./exmpty-doctor-state";
+import { DoctorPagination } from "./doctor-pagination";
+import { DeleteDoctorDialog } from "./delete-doctor-dialog";
 
 interface IDoctor {
   _id: string;
@@ -44,6 +24,7 @@ interface IDoctor {
   phone?: string;
   email?: string;
   patientCount?: number;
+  createdAt: string;
 }
 
 interface ApiResponse {
@@ -62,10 +43,58 @@ const DoctorList = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [specialization, setSpecialization] = useState<string>("");
+  const [hospital, setHospital] = useState<string>("");
+
+  // Debounce search
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setSpecialization("");
+    setHospital("");
+    setPage(1);
+  };
+
   const { data, isLoading } = useQuery<ApiResponse>({
-    queryKey: ["doctors", page],
+    queryKey: [
+      "doctors",
+      page,
+      debouncedSearch,
+      startDate,
+      endDate,
+      specialization,
+      hospital,
+    ],
     queryFn: async () => {
-      const response = await axios.get(`/api/doctors?page=${page}&limit=10`);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+      });
+
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (startDate) params.append("startDate", startDate.toISOString());
+      if (endDate) params.append("endDate", endDate.toISOString());
+      if (specialization && specialization !== "all")
+        params.append("specialization", specialization);
+      if (hospital && hospital !== "all") params.append("hospital", hospital);
+
+      const response = await axios.get(`/api/doctors?${params.toString()}`);
       return response.data;
     },
   });
@@ -84,8 +113,19 @@ const DoctorList = () => {
     },
   });
 
+  const activeFiltersCount = [
+    debouncedSearch,
+    startDate,
+    endDate,
+    specialization && specialization !== "all",
+    hospital && hospital !== "all",
+  ].filter(Boolean).length;
+
+  const hasData = data?.data && data.data.length > 0;
+
   return (
     <div className="w-full space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between bg-white p-6 rounded-xl border shadow-sm">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -104,211 +144,67 @@ const DoctorList = () => {
         </Button>
       </div>
 
+      {/* Search and Filter Section */}
+      <div className="bg-white p-4 rounded-xl border shadow-sm">
+        <div className="flex flex-col md:flex-row gap-4">
+          <DoctorSearchBar searchTerm={searchTerm} onSearch={handleSearch} />
+          <DoctorFilters
+            startDate={startDate}
+            endDate={endDate}
+            specialization={specialization}
+            hospital={hospital}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onSpecializationChange={setSpecialization}
+            onHospitalChange={setHospital}
+            onClearFilters={clearFilters}
+            activeFiltersCount={activeFiltersCount}
+          />
+        </div>
+        <ActiveFilters
+          searchTerm={debouncedSearch}
+          startDate={startDate}
+          endDate={endDate}
+          specialization={specialization}
+          hospital={hospital}
+          onRemoveSearch={() => handleSearch("")}
+          onRemoveStartDate={() => setStartDate(undefined)}
+          onRemoveEndDate={() => setEndDate(undefined)}
+          onRemoveSpecialization={() => setSpecialization("")}
+          onRemoveHospital={() => setHospital("")}
+        />
+      </div>
+
+      {/* Table Section */}
       <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-slate-100">
-            <TableRow>
-              {[
-                "Doctor Name",
-                "Specialization",
-                "Hospital",
-                "Contact",
-                "Patients",
-                "Actions",
-              ].map((head) => (
-                <TableHead
-                  key={head}
-                  className="py-4 font-bold text-slate-800 text-center uppercase text-xs tracking-wider"
-                >
-                  {head}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index}>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <TableCell key={i}>
-                      <Skeleton className="h-5 w-32 mx-auto" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : data?.data && data.data.length > 0 ? (
-              data.data.map((doctor) => (
-                <TableRow
-                  key={doctor._id}
-                  className="hover:bg-slate-50/50 transition-colors group"
-                >
-                  <TableCell className="font-medium text-slate-900 text-center">
-                    {doctor.name}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-tighter">
-                      {doctor.specialization}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-slate-600 text-center">
-                    {doctor.hospital}
-                  </TableCell>
-                  <TableCell className="text-slate-600 text-center">
-                    {doctor.phone || "N/A"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Link href={`/doctor-management/${doctor._id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2 h-8 rounded-sm hover:bg-blue-50 hover:text-blue-600"
-                      >
-                        <Users className="h-3.5 w-3.5" />
-                        <span className="font-semibold">
-                          {doctor.patientCount || 0}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          patients
-                        </span>
-                      </Button>
-                    </Link>
-                  </TableCell>
-                  <TableCell className="py-3 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <Link href={`/doctor-management/${doctor._id}`}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/doctor-management/edit/${doctor._id}`}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 rounded-sm border-slate-200 hover:bg-slate-100 hover:text-blue-600"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-sm border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
-                        onClick={() => setDeleteId(doctor._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-[400px] text-center bg-slate-50/30"
-                >
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <div className="p-5 bg-white border rounded-full shadow-sm">
-                      <UserRoundX className="h-10 w-10 text-slate-400" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        No medical staff found
-                      </h3>
-                      <p className="text-sm text-slate-500 max-w-[250px] mx-auto">
-                        Your database is currently empty. Start by registering a
-                        new doctor.
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push("/doctor-management/create")}
-                      className="mt-2 rounded-sm h-[40px] px-6"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Register Now
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DoctorTable
+          doctors={data?.data || []}
+          isLoading={isLoading}
+          onDeleteClick={setDeleteId}
+        />
 
-        {/* Pagination */}
-        {data && data.data.length > 0 && (
-          <div className="p-4 border-t flex items-center justify-between bg-white">
-            <div className="text-sm text-muted-foreground">
-              Showing page {page} of {data.pagination.totalPages}
-            </div>
-            <Pagination className="justify-end w-auto mx-0">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className={`cursor-pointer rounded-sm ${page === 1 ? "pointer-events-none opacity-50" : ""}`}
-                  />
-                </PaginationItem>
+        {!isLoading && !hasData && (
+          <EmptyDoctorState
+            onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
+          />
+        )}
 
-                <PaginationItem>
-                  <PaginationLink isActive className="rounded-sm h-9 w-9">
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setPage((p) =>
-                        Math.min(data.pagination.totalPages, p + 1),
-                      )
-                    }
-                    className={`cursor-pointer rounded-sm ${page >= data.pagination.totalPages ? "pointer-events-none opacity-50" : ""}`}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+        {hasData && (
+          <DoctorPagination
+            currentPage={page}
+            totalPages={data.pagination.totalPages}
+            onPageChange={setPage}
+          />
         )}
       </div>
 
       {/* Delete Dialog */}
-      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="max-w-[400px] rounded-sm">
-          <DialogHeader>
-            <DialogTitle>Permanent Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this doctor? All associated
-              records will be deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteId(null)}
-              className="h-[45px] rounded-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteId && deleteDoctor(deleteId)}
-              disabled={isDeleting}
-              className="h-[45px] rounded-sm min-w-[100px]"
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Confirm Delete"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteDoctorDialog
+        isOpen={!!deleteId}
+        isDeleting={isDeleting}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => deleteId && deleteDoctor(deleteId)}
+      />
     </div>
   );
 };
