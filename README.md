@@ -213,6 +213,9 @@ src/
 
 ## 📸 Screenshots
 
+### Authentication
+![Login](./screenshots/login.png)
+
 ### 🖥 Desktop View
 ![Dashboard](./screenshots/dashboard.png)
 

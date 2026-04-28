@@ -59,18 +59,19 @@ const CreateDoctor = () => {
   const { data: doctorData, isLoading: loadingDoctor } = useQuery({
     queryKey: ["doctor", doctorId],
     queryFn: async () => {
-      const response = await axios.get(`/api/doctors/${doctorId}`);
-      return response.data.data.doctor || response.data.data;
+      const { data } = await axios.get(`/api/doctors/${doctorId}`);
+      return data.data.doctor;
     },
-    enabled: isEditMode,
+    enabled: isEditMode && !!doctorId,
+    staleTime: 0,
   });
 
   useEffect(() => {
     if (doctorData) {
       reset({
-        name: doctorData.name,
-        specialization: doctorData.specialization,
-        hospital: doctorData.hospital,
+        name: doctorData.name || "",
+        specialization: doctorData.specialization || "",
+        hospital: doctorData.hospital || "",
         phone: doctorData.phone || "",
         email: doctorData.email || "",
       });
@@ -87,11 +88,17 @@ const CreateDoctor = () => {
     onSuccess: () => {
       toast.success(
         isEditMode
-          ? "Doctor profile updated"
+          ? "Doctor profile updated successfully"
           : "Doctor registered successfully",
       );
+
       queryClient.invalidateQueries({ queryKey: ["doctors"] });
+      if (isEditMode) {
+        queryClient.invalidateQueries({ queryKey: ["doctor", doctorId] });
+      }
+
       router.push("/doctor-management");
+      router.refresh();
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
@@ -105,16 +112,18 @@ const CreateDoctor = () => {
 
   if (isEditMode && loadingDoctor) {
     return (
-      <div className="h-[400px] flex flex-col items-center justify-center gap-4 bg-white rounded-xl border">
+      <div className="h-[500px] flex flex-col items-center justify-center gap-4 bg-white rounded-xl border border-dashed">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-slate-500 font-medium">Fetching doctor records...</p>
+        <p className="text-slate-500 font-medium animate-pulse">
+          Fetching doctor records...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="w-full space-y-6">
-      {/* Top Bar */}
+      {/* Top Bar Header */}
       <div className="flex items-center justify-between bg-white p-6 rounded-xl border shadow-sm">
         <div className="flex items-center gap-4">
           <Button
@@ -132,18 +141,19 @@ const CreateDoctor = () => {
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
               {isEditMode
-                ? "Modify the professional details of the registered doctor."
-                : "Add a new healthcare professional to the system."}
+                ? "Modify professional details of the registered specialist."
+                : "Add a new healthcare professional to the medical system."}
             </p>
           </div>
         </div>
       </div>
 
+      {/* Main Form Body */}
       <div className="w-full p-8 bg-white rounded-xl border shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <FieldSet>
-              <FieldLegend className="!text-2xl font-bold">
+              <FieldLegend className="!text-2xl font-bold text-slate-900">
                 Professional Information
               </FieldLegend>
               <FieldDescription>
@@ -154,15 +164,16 @@ const CreateDoctor = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Doctor Name */}
                   <Field>
-                    <FieldLabel htmlFor="doctor-name">Full Name</FieldLabel>
+                    <FieldLabel className="text-slate-700 font-semibold">
+                      Full Name
+                    </FieldLabel>
                     <Input
-                      id="doctor-name"
-                      placeholder="Enter full name"
+                      placeholder="e.g. Dr. John Doe"
                       {...register("name")}
-                      className="h-[45px] rounded-sm border-slate-200"
+                      className="h-[45px] rounded-sm border-slate-200 focus:ring-primary"
                     />
                     {errors.name && (
-                      <p className="text-sm font-medium text-destructive mt-1">
+                      <p className="text-xs font-bold text-destructive mt-1 uppercase tracking-tighter">
                         {errors.name.message}
                       </p>
                     )}
@@ -170,17 +181,16 @@ const CreateDoctor = () => {
 
                   {/* Specialization */}
                   <Field>
-                    <FieldLabel htmlFor="specialization">
+                    <FieldLabel className="text-slate-700 font-semibold">
                       Specialization
                     </FieldLabel>
                     <Input
-                      id="specialization"
-                      placeholder="e.g. Cardiology"
+                      placeholder="e.g. Neurology Specialist"
                       {...register("specialization")}
-                      className="h-[45px] rounded-sm border-slate-200"
+                      className="h-[45px] rounded-sm border-slate-200 focus:ring-primary"
                     />
                     {errors.specialization && (
-                      <p className="text-sm font-medium text-destructive mt-1">
+                      <p className="text-xs font-bold text-destructive mt-1 uppercase tracking-tighter">
                         {errors.specialization.message}
                       </p>
                     )}
@@ -189,53 +199,54 @@ const CreateDoctor = () => {
 
                 {/* Hospital */}
                 <Field>
-                  <FieldLabel htmlFor="hospital">
+                  <FieldLabel className="text-slate-700 font-semibold">
                     Hospital / Clinic Name
                   </FieldLabel>
                   <Input
-                    id="hospital"
-                    placeholder="Enter current working place"
+                    placeholder="Enter medical facility name"
                     {...register("hospital")}
-                    className="h-[45px] rounded-sm border-slate-200"
+                    className="h-[45px] rounded-sm border-slate-200 focus:ring-primary"
                   />
                   {errors.hospital && (
-                    <p className="text-sm font-medium text-destructive mt-1">
+                    <p className="text-xs font-bold text-destructive mt-1 uppercase tracking-tighter">
                       {errors.hospital.message}
                     </p>
                   )}
                 </Field>
 
-                <FieldSeparator className="my-4" />
+                <FieldSeparator className="my-6 border-slate-100" />
 
                 {/* Contact Section */}
                 <FieldSet>
-                  <FieldLegend className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                    Contact Details
+                  <FieldLegend className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                    Contact Channels
                   </FieldLegend>
-                  <FieldGroup className="mt-4">
+                  <FieldGroup>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Field>
-                        <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+                        <FieldLabel className="text-slate-700">
+                          Phone Number
+                        </FieldLabel>
                         <Input
-                          id="phone"
                           type="tel"
-                          placeholder="+880..."
+                          placeholder="+880 1XXX-XXXXXX"
                           {...register("phone")}
                           className="h-[45px] rounded-sm border-slate-200"
                         />
                       </Field>
 
                       <Field>
-                        <FieldLabel htmlFor="email">Email Address</FieldLabel>
+                        <FieldLabel className="text-slate-700">
+                          Email Address
+                        </FieldLabel>
                         <Input
-                          id="email"
                           type="email"
-                          placeholder="doctor@example.com"
+                          placeholder="doctor@medical.com"
                           {...register("email")}
                           className="h-[45px] rounded-sm border-slate-200"
                         />
                         {errors.email && (
-                          <p className="text-sm font-medium text-destructive mt-1">
+                          <p className="text-xs font-bold text-destructive mt-1 uppercase tracking-tighter">
                             {errors.email.message}
                           </p>
                         )}
@@ -247,27 +258,27 @@ const CreateDoctor = () => {
             </FieldSet>
 
             {/* Form Actions */}
-            <Field orientation="horizontal" className="justify-end pt-8 gap-4">
+            <Field orientation="horizontal" className="justify-end pt-10 gap-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                className="h-[50px] px-8 rounded-sm border-slate-200"
+                className="h-[50px] px-8 rounded-sm border-slate-200 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isPending}
-                className="min-w-[160px] h-[50px] rounded-sm shadow-sm"
+                className="min-w-[180px] h-[50px] rounded-sm shadow-md transition-all"
               >
                 {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Registering...</span>
+                  </div>
                 ) : isEditMode ? (
-                  "Update Changes"
+                  "Update Profile"
                 ) : (
                   "Save Doctor"
                 )}
