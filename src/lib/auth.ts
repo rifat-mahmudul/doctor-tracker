@@ -4,6 +4,26 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import bcrypt from "bcryptjs";
 
+declare module "next-auth" {
+  interface User {
+    role?: "admin" | "doctor" | "staff";
+  }
+
+  interface Session {
+    user: {
+      name?: string | null;
+      email?: string | null;
+      role?: "admin" | "doctor" | "staff";
+    };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: "admin" | "doctor" | "staff";
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -34,6 +54,7 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          role: user.role,
         };
       },
     }),
@@ -41,6 +62,23 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
+  },
+
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        session.user.role = token.role as any;
+      }
+      return session;
+    },
   },
 
   pages: {

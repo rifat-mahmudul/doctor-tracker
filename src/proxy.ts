@@ -1,19 +1,32 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function proxy(req: any) {
-  const token = await getToken({ req });
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  const isLoginPage = req.nextUrl.pathname.startsWith("/login");
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const isLoginPage = pathname.startsWith("/login");
 
   if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  if (token && isLoginPage) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
+  matcher: ["/((?!_next|favicon.ico).*)"],
 };
